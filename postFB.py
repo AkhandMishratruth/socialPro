@@ -114,3 +114,5 @@ def posts(index):
         listToReturn.append(listMain[i])
     shuffle(listMain)
     return json.dumps({"listArray":listToReturn})
+
+fbSinglePost()
