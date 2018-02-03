@@ -36,7 +36,7 @@ def jsonProvider():
         print counter.value
     with face.app_context():
         toReturn = posts(counter.value)
-        print toReturn
+        #print toReturn
         return toReturn
     
 if __name__ == '__main__':
