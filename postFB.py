@@ -8,73 +8,81 @@ import rake
 import httplib, urllib, base64, json
 from analyze import *
 from random import shuffle
+import time
 
 def fbSinglePost():
-    fileOpen = open('namesPickle.pickle','rb')
-    likesNames = pickle.load(fileOpen)
-    fileOpen.close()
+    toRet = []
+##    fileOpen = open('namesPickle.pickle','rb')
+##    likesNames = pickle.load(fileOpen)
+##    fileOpen.close()
 
-    fileOpen = open('idPickle.pickle','rb')
+    fileOpen = open('fbLikes.pickle','rb')
     likesId = pickle.load(fileOpen)
     fileOpen.close()
 
-    luckyNumber = int(round(random.uniform(0, 99)))
+    #luckyNumber = int(round(random.uniform(0, 99)))
 
-    luckyId = likesId[luckyNumber]
-    luckyName = likesNames[luckyNumber]
+    #luckyId = likesId[luckyNumber]
+    #luckyName = likesNames[luckyNumber]
 
-    token = 'EAACEdEose0cBAKZB1ihZCsCp1ikxRjyZAMAaFkWUl4y9qNHOuqwzm9fc0yr6ZAoDa9BR6NWKx9r1Ufev9mbHFsRCwn5Fd8ssXFYF3NtlUpXhGZC3RX0frERvPiRnXtFd6tpaH08NFW9z4JEh4EZB5m31e87GlcwOmnidUY2y1ivmprF0nBaTZBZCU157b4x49N0ZD'
+    token = 'EAACEdEose0cBAEFvIvSqZBR3vwGqaSuD98pyQy2dDZAeQ8PYwdb3OWlMmZBUqLs60iEWaiJH1ZCgEUve5I0Cn4toGqhVLscZBYm64LTsjCelxtDdVGyr3dk7OzeZCbDhtzPgQEGxTD97ZBxQfmYxU3xG5xm5sMAWGj6fuy2pG2EXl06K4gdVBTIz2UIh98vorwZD'
 
-    url = "https://graph.facebook.com/v2.11/"+luckyId+"?fields=picture%7Burl%7D%2Cfeed%7Bmessage%2Cfull_picture%2Ccreated_time%7D&access_token="+token
+    for i in range(len(likesId)):
+        print "outer "+str(i)
 
-    postJSON = requests.get(url).json()
-    
-    if postJSON.has_key("feed"):
-        luckyMessageNumber = int(round(random.uniform(0, len(postJSON['feed']['data'])-1)))
-    else:
-        return None
-    print luckyName
+        url = "https://graph.facebook.com/v2.11/"+likesId[i]+"?fields=id%2Cfeed%7Bfull_picture%2Cmessage%2Ccreated_time%7D%2Cname%2Cpicture&access_token="+token
 
-    content =""
-    imageURL = ""
-    timestamp = ""
-    profilePicUrl = ""
-    contentTags = ""
-    pictureType = "full_picture"
-    imageAnalysis = ""
+        postJSON = requests.get(url).json()
 
-    
-    if postJSON['feed']['data'][luckyMessageNumber].has_key('message'):
-        content = postJSON['feed']['data'][luckyMessageNumber]['message']
-        '''
-        contentTagsList = keywordProvider(content)
-        for i in range(min(3, len(contentTagsList))):
-            if(len(contentTags)<40):
-                contentTags = contentTags + " " + contentTagsList[i][0]
-        contentTags = contentTags.strip()
-        tagArray = contentTags.split(" ")
-        contentTags = ""
-        for i in range(len(tagArray)):
-            if(len(contentTags)<35):
-                contentTags = contentTags + " " + tagArray[i]
-        contentTags = contentTags.strip()
-        '''
-        
+        if not postJSON.has_key("feed"):
+            return None
 
-    if postJSON['feed']['data'][luckyMessageNumber].has_key(pictureType):
-        imageURL = postJSON['feed']['data'][luckyMessageNumber][pictureType]
+        for j in range(min(3, len(postJSON['feed']['data']))):
+            print "inner "+str(j)
+                    
+            content =""
+            imageURL = ""
+            timestamp = ""
+            profilePicUrl = ""
+            contentTags = ""
+            pictureType = "full_picture"
+            imageAnalysis = ""
+            
+            if postJSON['feed']['data'][j].has_key('message'):
+                content = postJSON['feed']['data'][j]['message']
+                '''
+                contentTagsList = keywordProvider(content)
+                for i in range(min(3, len(contentTagsList))):
+                    if(len(contentTags)<40):
+                        contentTags = contentTags + " " + contentTagsList[i][0]
+                contentTags = contentTags.strip()
+                tagArray = contentTags.split(" ")
+                contentTags = ""
+                for i in range(len(tagArray)):
+                    if(len(contentTags)<35):
+                        contentTags = contentTags + " " + tagArray[i]
+                contentTags = contentTags.strip()
+                '''    
+            if postJSON['feed']['data'][j].has_key(pictureType):
+                imageURL = postJSON['feed']['data'][j][pictureType]
 ##        imageAnalysis = str(simplifyJson(imageURL))
 ##        print imageAnalysis
 
-    if postJSON['feed']['data'][luckyMessageNumber].has_key("created_time"):
-        t = timeToString(postJSON['feed']['data'][luckyMessageNumber]["created_time"])
+            if postJSON['feed']['data'][j].has_key("created_time"):
+                t = timeToString(postJSON['feed']['data'][j]["created_time"])
 
-    if postJSON['picture']['data'].has_key("url"):
-        profilePicUrl = postJSON['picture']['data']['url']
-        
-    imageAnalysis = simplifyImageJson(str(imageURL))
+            if postJSON['picture']['data'].has_key("url"):
+                profilePicUrl = postJSON['picture']['data']['url']
+                
+                imageAnalysis = simplifyImageJson(str(imageURL))
+                
+            onePostdict = {'from':"Facebook","Name":postJSON['name'],"adult":imageAnalysis["adult"],"textInImage":imageAnalysis["textInImage"] , "caption": imageAnalysis["caption"], "accentColor": imageAnalysis['accentColor'], "profilePic":profilePicUrl, "content":content, "contentTags":contentTags, "imageURL":imageURL, "timestamp":t}
+            toRet.append(onePostdict)
+            time.sleep(3)
     
-    return {'from':"Facebook","Name":luckyName,"adult":imageAnalysis["adult"],"textInImage":imageAnalysis["textInImage"] , "caption": imageAnalysis["caption"], "accentColor": imageAnalysis['accentColor'], "profilePic":profilePicUrl, "content":content, "contentTags":contentTags, "imageURL":imageURL, "timestamp":t}
+    f = open('fbData.pickle','wb')
+    pickle.dump(toRet, f)
+    f.close()
 
 def timeToString(t):
     t = t.split("+")[0].split("T")[0]+" "+t.split("+")[0].split("T")[1]
@@ -93,15 +101,16 @@ def keywordProvider(text):
 
 def posts(index):
     listToReturn = []
-    f = open('backupData.pickle','r')
+    f = open('instaFeed.pickle','r')
     listMain = pickle.load(f)
     f.close()
-    f = open('twitterData.pickle','r')
-    twi = pickle.load(f)
-    f.close()
-    for i in range(20):
-        listMain.append(twi[i])
-    shuffle(listMain)
+##    f = open('twitterData.pickle','r')
+##    twi = pickle.load(f)
+##    f.close()
+##    for i in range(20):
+##        listMain.append(twi[i])
+##    shuffle(listMain)
     for i in range(index, index + 10):
         listToReturn.append(listMain[i])
+    shuffle(listMain)
     return json.dumps({"listArray":listToReturn})

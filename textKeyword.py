@@ -2,7 +2,7 @@ import httplib, urllib, json, pickle
 
 accessKey = '92c6e0a9e5154377858cc7860eda4c32'
 
-f = open('backupData.pickle', 'rb')
+f = open('instaFeed.pickle', 'rb')
 
 listToReturn = pickle.load(f)
 
@@ -42,6 +42,6 @@ for i in range(len(doc)):
         cTags = cTags + " " + doc[i]['keyPhrases'][j]
     listToReturn[ida]["contentTags"] = cTags
 
-f = open('backupData.pickle', 'wb')
+f = open('instaFeed.pickle', 'wb')
 pickle.dump(listToReturn, f)
 f.close()
